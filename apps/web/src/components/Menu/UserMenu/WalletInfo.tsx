@@ -32,11 +32,42 @@ import { getBlockExploreLink, getBlockExploreName } from 'utils'
 import { Address } from 'viem'
 import { useAccount, useBalance } from 'wagmi'
 import { useActiveChainId } from 'hooks/useActiveChainId'
+import styled from 'styled-components'
 
 const COLORS = {
   ETH: '#627EEA',
   BNB: '#14151A',
 }
+
+const ENSContainer = styled(Box)`
+  background: linear-gradient(
+    135deg,
+    ${({ theme }) => theme.colors.backgroundAlt} 0%,
+    ${({ theme }) => theme.colors.background} 100%
+  );
+  border: 1px solid ${({ theme }) => theme.colors.cardBorder};
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+`
+
+const AvatarImage = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  object-fit: cover;
+`
+
+const ENSBadge = styled(Box)`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #1fc7d4 0%, #7645d9 100%);
+  border-radius: 8px;
+  margin-bottom: 4px;
+`
 
 interface WalletInfoProps {
   hasLowNativeBalance: boolean
@@ -48,7 +79,7 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
   const { t } = useTranslation()
   const { chainId } = useActiveChainId()
   const { address: account, chain } = useAccount()
-  const { domainName } = useDomainNameForAddress(account ?? '')
+  const { domainName, avatar } = useDomainNameForAddress(account ?? '')
   const isBSC = chainId === ChainId.BSC
   const bnbBalance = useBalance({ address: account ?? undefined, chainId: ChainId.BSC })
   const nativeBalance = useBalance({ address: account ?? undefined, query: { enabled: !isBSC } })
@@ -100,10 +131,43 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
       <Text color="secondary" fontSize="12px" textTransform="uppercase" fontWeight="bold" mb="8px">
         {t('Your Address')}
       </Text>
-      <FlexGap flexDirection="column" mb="24px" gap="8px">
-        <CopyAddress tooltipMessage={t('Copied')} account={account ?? undefined} />
-        {domainName ? <Text color="textSubtle">{domainName}</Text> : null}
-      </FlexGap>
+      {domainName ? (
+        <ENSContainer>
+          <FlexGap gap="12px" alignItems="center" mb="8px">
+            {avatar ? (
+              <AvatarImage src={avatar} alt={domainName} />
+            ) : (
+              <Box
+                width="40px"
+                height="40px"
+                borderRadius="50%"
+                bg="backgroundAlt"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                border="2px solid"
+                borderColor="primary"
+              >
+                <Text fontSize="18px" bold>
+                  {domainName.charAt(0).toUpperCase()}
+                </Text>
+              </Box>
+            )}
+            <Box flex="1">
+              <ENSBadge>
+                <Text fontSize="11px" bold color="white">
+                  ✓ {domainName}
+                </Text>
+              </ENSBadge>
+              <CopyAddress tooltipMessage={t('Copied')} account={account ?? undefined} style={{ fontSize: '12px' }} />
+            </Box>
+          </FlexGap>
+        </ENSContainer>
+      ) : (
+        <Box mb="24px">
+          <CopyAddress tooltipMessage={t('Copied')} account={account ?? undefined} />
+        </Box>
+      )}
       {hasLowNativeBalance && (
         <Message variant="warning" mb="24px">
           <Box>
