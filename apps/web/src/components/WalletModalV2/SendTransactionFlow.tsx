@@ -15,6 +15,7 @@ import {
 } from '@pancakeswap/uikit'
 import tryParseAmount from '@pancakeswap/utils/tryParseAmount'
 import { ConfirmationPendingContent } from '@pancakeswap/widgets-internal'
+import { AddressWithENS } from 'components/AddressWithENS'
 import { ChainLogo } from 'components/Logo/ChainLogo'
 import { TokenAmountSection } from 'components/TokenAmountSection'
 import { useActiveChainId } from 'hooks/useActiveChainId'
@@ -78,8 +79,6 @@ export function ConfirmTransactionContent({
   const nativeCurrency = useNativeCurrency(asset.chainId)
   const { switchNetworkAsync } = useSwitchNetwork()
 
-  const price = asset.price?.usd ?? 0
-
   const tokenAmount = useMemo(() => {
     const currency = new Token(
       asset.chainId,
@@ -109,7 +108,7 @@ export function ConfirmTransactionContent({
           <Flex justifyContent="space-between" width="100%" mb="8px" alignItems="flex-start">
             <Text color="textSubtle">{t('To')}</Text>
             <Box maxWidth="70%" style={{ wordBreak: 'break-all', textAlign: 'right' }}>
-              <Text>{recipient}</Text>
+              <AddressWithENS address={recipient} avatarSize={20} fontSize="14px" />
             </Box>
           </Flex>
 
@@ -213,9 +212,12 @@ export function TransactionCompletedContent({
             </Text>
           </Box>
           <Box background="backgroundAlt" padding="16px" borderRadius="16px" width="100%">
-            <Text textAlign="center">
-              {amount} {asset.token.symbol} {t('has been sent to')} {recipient.slice(0, 6)}...{recipient.slice(-4)}
-            </Text>
+            <AutoColumn gap="8px" justify="center">
+              <Text textAlign="center">
+                {amount} {asset.token.symbol} {t('has been sent to')}
+              </Text>
+              <AddressWithENS address={recipient} avatarSize={24} fontSize="14px" />
+            </AutoColumn>
           </Box>
           {chainId && hash && (
             <Link external small href={getBlockExploreLink(hash, 'transaction', chainId)}>
