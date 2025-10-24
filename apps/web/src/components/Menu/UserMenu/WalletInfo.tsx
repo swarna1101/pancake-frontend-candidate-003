@@ -137,12 +137,11 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
             {avatar ? (
               <AvatarImage src={avatar} alt={domainName} />
             ) : (
-              <Box
+              <Flex
                 width="40px"
                 height="40px"
                 borderRadius="50%"
                 bg="backgroundAlt"
-                display="flex"
                 alignItems="center"
                 justifyContent="center"
                 border="2px solid"
@@ -151,9 +150,9 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ hasLowNativeBalance, onDismiss 
                 <Text fontSize="18px" bold>
                   {domainName.charAt(0).toUpperCase()}
                 </Text>
-              </Box>
+              </Flex>
             )}
-            <Box flex="1">
+            <Box style={{ flex: 1 }}>
               <ENSBadge>
                 <Text fontSize="11px" bold color="white">
                   ✓ {domainName}
