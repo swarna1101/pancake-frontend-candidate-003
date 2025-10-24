@@ -190,10 +190,6 @@ const config: (
           href: '/info/v3',
         },
         {
-          label: t('Burn Dashboard'),
-          href: '/burn-dashboard',
-        },
-        {
           label: t('IFO'),
           href: '/ifo',
           image: '/images/ifos/ifo-bunny.png',
