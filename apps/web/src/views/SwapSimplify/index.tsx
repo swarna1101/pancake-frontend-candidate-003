@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 
 import { MobileCard } from 'components/AdPanel/MobileCard'
+import { ENSPreferencesIndicator } from 'components/ENSPreferencesIndicator'
 import { useCurrency } from 'hooks/Tokens'
 import { AutoSlippageProvider } from 'hooks/useAutoSlippageWithFallback'
 import { useSwapHotTokenDisplay } from 'hooks/useSwapHotTokenDisplay'
@@ -108,6 +109,9 @@ const InfinitySwapInner = () => {
           >
             <AutoSlippageProvider>
               <Wrapper height="100%">
+                <Box mb="12px">
+                  <ENSPreferencesIndicator />
+                </Box>
                 <InfinitySwapForm />
               </Wrapper>
             </AutoSlippageProvider>

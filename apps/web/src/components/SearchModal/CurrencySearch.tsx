@@ -9,9 +9,11 @@ import {
   CogIcon,
   Column,
   Flex,
+  FlexGap,
   IconButton,
   ModalCloseButton,
   ModalTitle,
+  Skeleton,
   Spinner,
   Text,
   useMatchBreakpoints,
@@ -23,6 +25,7 @@ import { isAddress } from 'viem'
 
 import { useActiveChainId } from 'hooks/useActiveChainId'
 import useNativeCurrency from 'hooks/useNativeCurrency'
+import { useENSTokenAddress } from 'hooks/useENSTokenAddress'
 import { useAllLists, useInactiveListUrls } from 'state/lists/hooks'
 import { safeGetAddress } from 'utils'
 
@@ -143,7 +146,18 @@ function CurrencySearch({
   const allTokens = useAllTokens(selectedChainId)
   const native = useNativeCurrency(selectedChainId)
 
-  const searchToken = useToken(debouncedQuery, selectedChainId)
+  // Try to resolve ENS name for token addresses
+  const {
+    address: ensResolvedAddress,
+    isENSName: isSearchENSName,
+    ensName: searchENSName,
+    isLoading: isResolvingSearchENS,
+    hasTokenRecord,
+  } = useENSTokenAddress(debouncedQuery, true)
+
+  // Use ENS resolved address if available, otherwise use the debounced query
+  const finalSearchQuery = ensResolvedAddress || debouncedQuery
+  const searchToken = useToken(finalSearchQuery, selectedChainId)
 
   // if they input an address, use it
   const searchTokenIsAdded = useIsUserAddedToken(searchToken, selectedChainId)
@@ -338,6 +352,34 @@ function CurrencySearch({
           />
         )}
       </AutoColumn>
+
+      {/* ENS Resolution Feedback */}
+      {isResolvingSearchENS && debouncedQuery && (
+        <FlexGap gap="8px" alignItems="center" mt="8px">
+          <Skeleton width="20px" height="20px" />
+          <Text color="textSubtle" fontSize="12px">
+            {t('Resolving ENS name for token...')}
+          </Text>
+        </FlexGap>
+      )}
+      {isSearchENSName && ensResolvedAddress && !isResolvingSearchENS && (
+        <FlexGap gap="8px" alignItems="center" flexDirection="column" alignSelf="flex-start" mt="8px">
+          <FlexGap gap="8px" alignItems="center">
+            <Text fontSize="11px" color="success" bold>
+              ✓ {t('ENS Resolved')}
+            </Text>
+            {hasTokenRecord && (
+              <Text fontSize="9px" color="textSubtle">
+                ({t('token record')})
+              </Text>
+            )}
+          </FlexGap>
+          <Text fontSize="10px" color="textSubtle" style={{ fontFamily: 'monospace' }}>
+            {searchENSName} → {ensResolvedAddress}
+          </Text>
+        </FlexGap>
+      )}
+
       {account && isLoadingBalances ? (
         <Flex width="100%" justifyContent="center" alignItems="center" pt="24px">
           <Spinner />

@@ -6,15 +6,19 @@ import {
   Button,
   Column,
   DeleteOutlineIcon,
+  FlexGap,
   IconButton,
   Input,
   Link,
+  Skeleton,
   Text,
 } from '@pancakeswap/uikit'
 import Row, { RowBetween, RowFixed } from 'components/Layout/Row'
 import { CurrencyLogo } from 'components/Logo'
 import { useTokenByChainId } from 'hooks/Tokens'
 import { useActiveChainId } from 'hooks/useActiveChainId'
+import { useENSTokenAddress } from 'hooks/useENSTokenAddress'
+import { useDebounce } from '@pancakeswap/hooks'
 import { RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useRemoveUserAddedToken } from 'state/user/hooks'
 import useUserAddedTokens from 'state/user/hooks/useUserAddedTokens'
@@ -54,17 +58,30 @@ export default function ManageTokens({
   const { t } = useTranslation()
 
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   // manage focus on modal show
   const inputRef = useRef<HTMLInputElement>()
   const handleInput = useCallback((event) => {
     const input = event.target.value
-    const checksummedInput = safeGetAddress(input)
-    setSearchQuery(checksummedInput || input)
+    setSearchQuery(input)
   }, [])
 
-  // if they input an address, use it
-  const searchToken = useTokenByChainId(searchQuery, chainId)
+  // Check if input looks like an ENS name
+  const looksLikeENS = searchQuery.trim().endsWith('.eth')
+
+  // Resolve ENS name or address
+  const {
+    address: resolvedAddress,
+    isENSName,
+    ensName,
+    isLoading: isResolvingENS,
+    hasTokenRecord,
+  } = useENSTokenAddress(debouncedSearchQuery, true)
+
+  // if they input an address or ENS name, use it
+  const finalAddress = resolvedAddress || (safeGetAddress(debouncedSearchQuery) ? debouncedSearchQuery : undefined)
+  const searchToken = useTokenByChainId(finalAddress, chainId)
 
   // all tokens for local list
   const userAddedTokens: Token[] = useUserAddedTokens(chainId)
@@ -108,7 +125,10 @@ export default function ManageTokens({
     )
   }, [userAddedTokens, chainId, removeToken])
 
-  const isAddressValid = searchQuery === '' || safeGetAddress(searchQuery)
+  const isAddressValid = searchQuery === '' || safeGetAddress(searchQuery) || isENSName
+
+  // Check if ENS resolved but no valid token was found
+  const ensResolvedButNoToken = isENSName && resolvedAddress && !isResolvingENS && !searchToken
 
   return (
     <Wrapper>
@@ -118,16 +138,51 @@ export default function ManageTokens({
             <Input
               id="token-search-input"
               scale="lg"
-              placeholder="0x0000"
+              placeholder={t('Token address or ENS name (e.g., uniswap.eth)')}
               value={searchQuery}
               autoComplete="off"
               ref={inputRef as RefObject<HTMLInputElement>}
               onChange={handleInput}
-              isWarning={!isAddressValid}
+              isWarning={!isAddressValid && !isResolvingENS && debouncedSearchQuery !== ''}
             />
           </Row>
-          {!isAddressValid && <Text color="failure">{t('Enter valid token address')}</Text>}
-          {searchToken && (
+          {!isAddressValid && !isResolvingENS && debouncedSearchQuery !== '' && (
+            <Text color="failure" fontSize="14px">
+              {t('Enter valid token address or ENS name')}
+            </Text>
+          )}
+          {looksLikeENS && isResolvingENS && (
+            <FlexGap gap="8px" alignItems="center" style={{ padding: '8px 0' }}>
+              <Skeleton width="16px" height="16px" variant="circle" />
+              <Text color="textSubtle" fontSize="13px">
+                {t('Resolving ENS name...')}
+              </Text>
+            </FlexGap>
+          )}
+          {isENSName && resolvedAddress && !isResolvingENS && (
+            <FlexGap gap="8px" alignItems="center" style={{ padding: '8px 0' }}>
+              <Text fontSize="16px" color="success" bold>
+                ✓
+              </Text>
+              <FlexGap gap="6px" alignItems="center" flexWrap="wrap">
+                <Text fontSize="14px" color="text" bold>
+                  {ensName}
+                </Text>
+                <Text fontSize="14px" color="textSubtle">
+                  →
+                </Text>
+                <Text fontSize="13px" color="textSubtle" style={{ fontFamily: 'monospace' }}>
+                  {resolvedAddress?.slice(0, 8)}...{resolvedAddress?.slice(-6)}
+                </Text>
+                {searchToken && (
+                  <Text fontSize="12px" color="success">
+                    ({t('Token found')})
+                  </Text>
+                )}
+              </FlexGap>
+            </FlexGap>
+          )}
+          {searchToken && !isResolvingENS && (
             <ImportRow
               token={searchToken}
               showImportView={() => setModalView(CurrencyModalView.importToken)}
