@@ -352,7 +352,9 @@ export const SendAssetForm: React.FC<SendAssetFormProps> = ({ asset, onViewState
       <SendTransactionFlow
         asset={asset}
         amount={amount}
-        recipient={(isENSName && ensName ? ensName : resolvedAddress) as string}
+        recipient={resolvedAddress as string}
+        recipientENSName={isENSName && ensName ? ensName : undefined}
+        recipientAvatar={isENSName && avatar ? avatar : undefined}
         onDismiss={() => {
           onViewStateChange(ViewState.SEND_ASSETS)
           setTxHash(undefined)

@@ -41,6 +41,8 @@ interface SendTransactionModalProps {
   asset: BalanceData
   amount: string
   recipient: string
+  recipientENSName?: string
+  recipientAvatar?: string
   onDismiss?: () => void
   onBack?: () => void
   txHash?: string
@@ -59,6 +61,8 @@ export function ConfirmTransactionContent({
   asset,
   amount,
   recipient,
+  recipientENSName,
+  recipientAvatar,
   onConfirm,
   estimatedFee,
   estimatedFeeUsd,
@@ -66,6 +70,8 @@ export function ConfirmTransactionContent({
   asset: BalanceData
   amount: string
   recipient: string
+  recipientENSName?: string
+  recipientAvatar?: string
   onConfirm: () => void
   estimatedFee?: string | null
   estimatedFeeUsd?: string | null
@@ -108,7 +114,44 @@ export function ConfirmTransactionContent({
           <Flex justifyContent="space-between" width="100%" mb="8px" alignItems="flex-start">
             <Text color="textSubtle">{t('To')}</Text>
             <Box maxWidth="70%" style={{ wordBreak: 'break-all', textAlign: 'right' }}>
-              <AddressWithENS address={recipient} avatarSize={20} fontSize="14px" />
+              {recipientENSName ? (
+                <FlexGap gap="8px" alignItems="center">
+                  {recipientAvatar ? (
+                    <img
+                      src={recipientAvatar}
+                      alt={recipientENSName}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        border: '1px solid',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#372F47',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '9px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {recipientENSName.charAt(0).toUpperCase()}
+                    </Box>
+                  )}
+                  <Text fontSize="14px" fontWeight={500}>
+                    {recipientENSName}
+                  </Text>
+                </FlexGap>
+              ) : (
+                <AddressWithENS address={recipient} avatarSize={20} fontSize="14px" />
+              )}
             </Box>
           </Flex>
 
@@ -189,6 +232,8 @@ export function TransactionCompletedContent({
   asset,
   amount,
   recipient,
+  recipientENSName,
+  recipientAvatar,
 }: {
   onDismiss?: () => void
   hash: string | undefined
@@ -196,6 +241,8 @@ export function TransactionCompletedContent({
   asset: BalanceData
   amount: string
   recipient: string
+  recipientENSName?: string
+  recipientAvatar?: string
 }) {
   const { t } = useTranslation()
 
@@ -216,7 +263,44 @@ export function TransactionCompletedContent({
               <Text textAlign="center">
                 {amount} {asset.token.symbol} {t('has been sent to')}
               </Text>
-              <AddressWithENS address={recipient} avatarSize={24} fontSize="14px" />
+              {recipientENSName ? (
+                <FlexGap gap="8px" alignItems="center" justifyContent="center">
+                  {recipientAvatar ? (
+                    <img
+                      src={recipientAvatar}
+                      alt={recipientENSName}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '1px solid',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: '#372F47',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {recipientENSName.charAt(0).toUpperCase()}
+                    </Box>
+                  )}
+                  <Text fontSize="14px" fontWeight={500}>
+                    {recipientENSName}
+                  </Text>
+                </FlexGap>
+              ) : (
+                <AddressWithENS address={recipient} avatarSize={24} fontSize="14px" />
+              )}
             </AutoColumn>
           </Box>
           {chainId && hash && (
@@ -241,6 +325,8 @@ const SendTransactionContent: React.FC<React.PropsWithChildren<SendTransactionMo
   asset,
   amount,
   recipient,
+  recipientENSName,
+  recipientAvatar,
   onDismiss,
   txHash,
   attemptingTxn,
@@ -270,12 +356,16 @@ const SendTransactionContent: React.FC<React.PropsWithChildren<SendTransactionMo
           asset={asset}
           amount={amount}
           recipient={recipient}
+          recipientENSName={recipientENSName}
+          recipientAvatar={recipientAvatar}
         />
       ) : (
         <ConfirmTransactionContent
           asset={asset}
           amount={amount}
           recipient={recipient}
+          recipientENSName={recipientENSName}
+          recipientAvatar={recipientAvatar}
           onConfirm={onConfirm}
           estimatedFee={estimatedFee}
           estimatedFeeUsd={estimatedFeeUsd}
