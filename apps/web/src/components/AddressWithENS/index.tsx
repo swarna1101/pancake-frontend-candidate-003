@@ -58,6 +58,7 @@ export const AddressWithENS: React.FC<AddressWithENSProps> = ({
     )
   }
 
+  // If the domain name is available, display the domain name, otherwise display the address
   const displayText = domainName || (showFullAddress ? address : `${address.slice(0, 6)}...${address.slice(-4)}`)
 
   const firstChar = domainName ? domainName.charAt(0).toUpperCase() : address.slice(2, 3).toUpperCase()

@@ -3,29 +3,41 @@ import { useActiveChainId } from 'hooks/useActiveChainId'
 import { useMemo } from 'react'
 import { Address, isAddress } from 'viem'
 import { normalize } from 'viem/ens'
-import { useEnsAddress, useEnsText } from 'wagmi'
+import { useEnsAddress, useEnsText, useReadContract } from 'wagmi'
+
+// Minimal ERC20 ABI to check if address is a token
+const ERC20_ABI = [
+  {
+    constant: true,
+    inputs: [],
+    name: 'decimals',
+    outputs: [{ name: '', type: 'uint8' }],
+    type: 'function',
+  },
+] as const
 
 /**
- * Hook to resolve ENS names to token contract addresses
+ * Hook to resolve ENS names to token contract addresses with ERC20 verification
  *
  * This hook enables users to import tokens using ENS names instead of contract addresses.
- * It supports two resolution methods:
+ * It supports multiple ENS TLDs (.eth, .xyz, .luxe, .kred, .art, .club, etc.)
  *
- * 1. **Primary Address Resolution**: Uses the primary address of the ENS name
- * 2. **Token Text Record**: Checks for a 'token' text record on the ENS name
+ * Resolution methods:
+ * 1. **Token Text Record**: Checks for a 'token' text record on the ENS name
  *    This allows ENS owners to specify a different token contract address
+ * 2. **Primary Address Resolution**: Falls back to the primary address of the ENS name
  *
- * The hook prioritizes the 'token' text record over the primary address,
- * allowing ENS names to point to token contracts they don't own.
+ * The hook verifies that the resolved address is a valid ERC20 token by checking
+ * for the decimals() function. This prevents non-token addresses from being imported.
  *
- * @param input - ENS name or Ethereum address
+ * @param input - ENS name (any TLD) or Ethereum address
  * @param enabled - Whether to enable the resolution (default: true)
- * @returns Object containing resolved address, ENS name, loading state, and validity
+ * @returns Object containing resolved address, ENS name, loading state, validity, and ERC20 verification
  */
 export const useENSTokenAddress = (input?: string, enabled = true) => {
   const { chainId } = useActiveChainId()
 
-  // Determine if input is an ENS name (contains .eth) or already an address
+  // Determine if input is an ENS name (any domain with a dot) or already an address
   const { isENSName, normalizedName } = useMemo(() => {
     if (!input || input.trim() === '') {
       return { isENSName: false, normalizedName: null }
@@ -38,8 +50,9 @@ export const useENSTokenAddress = (input?: string, enabled = true) => {
       return { isENSName: false, normalizedName: null }
     }
 
-    // Check if it looks like an ENS name
-    if (trimmed.endsWith('.eth') || trimmed.includes('.')) {
+    // Check if it looks like an ENS name (contains a dot)
+
+    if (trimmed.includes('.')) {
       try {
         const normalized = normalize(trimmed)
         return { isENSName: true, normalizedName: normalized }
@@ -100,28 +113,53 @@ export const useENSTokenAddress = (input?: string, enabled = true) => {
     return null
   }, [input, isENSName, tokenTextRecord, primaryAddress])
 
-  const isLoading = isENSName && (isPrimaryLoading || isTokenRecordLoading)
+  // Verify if the resolved address is an ERC20 token by checking for decimals function
+  const {
+    data: decimals,
+    isLoading: isVerifyingToken,
+    isError: isTokenVerificationError,
+  } = useReadContract({
+    address: resolvedAddress ?? undefined,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    chainId,
+    query: {
+      enabled: Boolean(resolvedAddress),
+      retry: 1, // Only retry once to fail fast for non-token addresses
+      staleTime: 60000, // Cache for 1 minute
+    },
+  })
+
+  const isERC20Token = useMemo(() => {
+    // If we have a resolved address and decimals were successfully fetched, it's an ERC20 token
+    return Boolean(resolvedAddress && decimals !== undefined && !isTokenVerificationError)
+  }, [resolvedAddress, decimals, isTokenVerificationError])
+
+  const isLoading = isENSName && (isPrimaryLoading || isTokenRecordLoading || isVerifyingToken)
 
   const isValid = useMemo(() => {
     if (!input || input.trim() === '') {
       return false
     }
 
-    // If it's an ENS name, it's valid if we resolved an address
+    // If it's an ENS name, it's valid if we resolved an address AND it's an ERC20 token
     if (isENSName) {
-      return resolvedAddress !== null
+      return resolvedAddress !== null && isERC20Token
     }
 
-    // If it's not an ENS name, check if it's a valid address
-    return isAddress(input.trim())
-  }, [input, isENSName, resolvedAddress])
+    // If it's not an ENS name, check if it's a valid address AND an ERC20 token
+    return isAddress(input.trim()) && isERC20Token
+  }, [input, isENSName, resolvedAddress, isERC20Token])
 
+  // Return the resolved address, ENS name, loading state, validity, token verification, and whether there's a token record
   return {
     address: resolvedAddress,
     isENSName,
     ensName: isENSName ? normalizedName : null,
     isLoading,
     isValid,
+    isERC20Token,
+    decimals: decimals as number | undefined,
     hasTokenRecord: Boolean(tokenTextRecord && isAddress(tokenTextRecord)),
   }
 }

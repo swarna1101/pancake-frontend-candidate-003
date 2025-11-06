@@ -147,12 +147,14 @@ function CurrencySearch({
   const native = useNativeCurrency(selectedChainId)
 
   // Try to resolve ENS name for token addresses
+  // Use the useENSTokenAddress hook to resolve the ENS name to a token address
   const {
     address: ensResolvedAddress,
     isENSName: isSearchENSName,
     ensName: searchENSName,
     isLoading: isResolvingSearchENS,
     hasTokenRecord,
+    isERC20Token,
   } = useENSTokenAddress(debouncedQuery, true)
 
   // Use ENS resolved address if available, otherwise use the debounced query
@@ -365,18 +367,31 @@ function CurrencySearch({
       {isSearchENSName && ensResolvedAddress && !isResolvingSearchENS && (
         <FlexGap gap="8px" alignItems="center" flexDirection="column" alignSelf="flex-start" mt="8px">
           <FlexGap gap="8px" alignItems="center">
-            <Text fontSize="11px" color="success" bold>
-              ✓ {t('ENS Resolved')}
-            </Text>
-            {hasTokenRecord && (
-              <Text fontSize="9px" color="textSubtle">
-                ({t('token record')})
+            {isERC20Token ? (
+              <>
+                <Text fontSize="11px" color="success" bold>
+                  ✓ {t('ENS Resolved')}
+                </Text>
+                {hasTokenRecord && (
+                  <Text fontSize="9px" color="textSubtle">
+                    ({t('token record')})
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text fontSize="11px" color="warning" bold>
+                ⚠ {t('Not an ERC20 token')}
               </Text>
             )}
           </FlexGap>
           <Text fontSize="10px" color="textSubtle" style={{ fontFamily: 'monospace' }}>
             {searchENSName} → {ensResolvedAddress}
           </Text>
+          {!isERC20Token && (
+            <Text fontSize="10px" color="textSubtle" textAlign="left">
+              {t('This address does not appear to be a valid ERC20 token contract')}
+            </Text>
+          )}
         </FlexGap>
       )}
 

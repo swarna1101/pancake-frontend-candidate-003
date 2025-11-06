@@ -109,6 +109,7 @@ export const SendAssetForm: React.FC<SendAssetFormProps> = ({ asset, onViewState
   const [isInputFocus, setIsInputFocus] = useState(false)
 
   // ENS Resolution: Resolve address or ENS name
+  // Use the useResolveAddressOrENS hook to resolve the address or ENS name
   const {
     address: resolvedAddress,
     isENSName,
@@ -352,8 +353,11 @@ export const SendAssetForm: React.FC<SendAssetFormProps> = ({ asset, onViewState
       <SendTransactionFlow
         asset={asset}
         amount={amount}
+        // Pass the resolved address to the SendTransactionFlow component
         recipient={resolvedAddress as string}
+        // Pass the ENS name to the SendTransactionFlow component if it exists
         recipientENSName={isENSName && ensName ? ensName : undefined}
+        // Pass the ENS avatar to the SendTransactionFlow component if it exists
         recipientAvatar={isENSName && avatar ? avatar : undefined}
         onDismiss={() => {
           onViewStateChange(ViewState.SEND_ASSETS)
@@ -408,7 +412,7 @@ export const SendAssetForm: React.FC<SendAssetFormProps> = ({ asset, onViewState
                 </AddressInputWrapper>
                 {addressError && <ErrorMessage>{addressError}</ErrorMessage>}
 
-                {/* Display ENS Profile if ENS name is entered */}
+                {/* Display ENS Profile if ENS name is entered and the address is resolved */}
                 {isENSName && resolvedAddress && !isResolvingENS && (
                   <ENSProfileDisplay
                     ensName={ensName}

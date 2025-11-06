@@ -37,8 +37,11 @@ export interface ENSPreferences {
  * @returns Object containing ENS preferences, loading state, and whether any were found
  */
 export const useENSPreferences = () => {
+  // Get the account address
   const { address: account } = useAccount()
+  // Get the active chain id
   const { chainId } = useActiveChainId()
+  // Get the domain name for the account
   const { domainName } = useDomainNameForAddress(account ?? '')
 
   // Determine ENS chain (mainnet or goerli)

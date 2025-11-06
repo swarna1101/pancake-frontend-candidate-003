@@ -67,8 +67,9 @@ export default function ManageTokens({
     setSearchQuery(input)
   }, [])
 
-  // Check if input looks like an ENS name
-  const looksLikeENS = searchQuery.trim().endsWith('.eth')
+  // Check if input looks like an ENS name (any domain with a dot)
+  // ENS supports multiple TLDs: .eth, .xyz, .luxe, .kred, .art, .club, etc.
+  const looksLikeENS = searchQuery.trim().includes('.')
 
   // Resolve ENS name or address
   const {
@@ -77,6 +78,7 @@ export default function ManageTokens({
     ensName,
     isLoading: isResolvingENS,
     hasTokenRecord,
+    isERC20Token,
   } = useENSTokenAddress(debouncedSearchQuery, true)
 
   // if they input an address or ENS name, use it
@@ -138,7 +140,7 @@ export default function ManageTokens({
             <Input
               id="token-search-input"
               scale="lg"
-              placeholder={t('Token address or ENS name (e.g., uniswap.eth)')}
+              placeholder={t('Token address or ENS name (e.g., token.eth, name.xyz)')}
               value={searchQuery}
               autoComplete="off"
               ref={inputRef as RefObject<HTMLInputElement>}
@@ -161,8 +163,8 @@ export default function ManageTokens({
           )}
           {isENSName && resolvedAddress && !isResolvingENS && (
             <FlexGap gap="8px" alignItems="center" style={{ padding: '8px 0' }}>
-              <Text fontSize="16px" color="success" bold>
-                ✓
+              <Text fontSize="16px" color={isERC20Token ? 'success' : 'warning'} bold>
+                {isERC20Token ? '✓' : '⚠'}
               </Text>
               <FlexGap gap="6px" alignItems="center" flexWrap="wrap">
                 <Text fontSize="14px" color="text" bold>
@@ -174,13 +176,18 @@ export default function ManageTokens({
                 <Text fontSize="13px" color="textSubtle" style={{ fontFamily: 'monospace' }}>
                   {resolvedAddress?.slice(0, 8)}...{resolvedAddress?.slice(-6)}
                 </Text>
-                {searchToken && (
+                {isERC20Token && searchToken && (
                   <Text fontSize="12px" color="success">
                     ({t('Token found')})
                   </Text>
                 )}
               </FlexGap>
             </FlexGap>
+          )}
+          {isENSName && resolvedAddress && !isResolvingENS && !isERC20Token && (
+            <Text fontSize="12px" color="warning" style={{ padding: '0 0 8px 0' }}>
+              {t('This address does not appear to be a valid ERC20 token contract')}
+            </Text>
           )}
           {searchToken && !isResolvingENS && (
             <ImportRow

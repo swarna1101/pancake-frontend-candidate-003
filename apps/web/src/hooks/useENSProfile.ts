@@ -6,10 +6,11 @@ import { normalize } from 'viem/ens'
 import { useEnsAddress, useEnsAvatar, useEnsText } from 'wagmi'
 
 /**
- * Hook to get comprehensive ENS profile information for a given ENS name
+ * Hook to get ENS profile information for a given ENS name
  * Includes: resolved address, avatar, and social text records
+ * Supports all ENS TLDs
  *
- * @param ensName - The ENS name to resolve (e.g., "vitalik.eth")
+ * @param ensName - The ENS name to resolve (e.g., "vitalik.eth", "name.xyz")
  * @param enabled - Whether to fetch data
  * @returns ENS profile data including address, avatar, and social records
  */
@@ -109,6 +110,7 @@ export function useENSProfile(ensName?: string, enabled = true) {
     },
   })
 
+  // Return the ENS profile data including address, avatar, and social records
   return useMemo(
     () => ({
       address: address as Address | undefined,
@@ -150,6 +152,7 @@ export function useResolveAddressOrENS(input?: string, enabled = true) {
   // If it's an ENS name, resolve it
   const ensProfile = useENSProfile(isENSName ? input : undefined, enabled && isENSName)
 
+  // Return the resolved address and ENS profile information if applicable
   return useMemo(() => {
     if (isAddress) {
       return {
@@ -163,6 +166,7 @@ export function useResolveAddressOrENS(input?: string, enabled = true) {
       }
     }
 
+    // If it's an ENS name, return the resolved address, ENS name, avatar, social records, loading state, and validity
     if (isENSName) {
       return {
         address: ensProfile.address,
@@ -175,6 +179,7 @@ export function useResolveAddressOrENS(input?: string, enabled = true) {
       }
     }
 
+    // If it's not an address or ENS name, return undefined
     return {
       address: undefined,
       isENSName: false,

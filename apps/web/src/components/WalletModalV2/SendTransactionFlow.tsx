@@ -114,6 +114,7 @@ export function ConfirmTransactionContent({
           <Flex justifyContent="space-between" width="100%" mb="8px" alignItems="flex-start">
             <Text color="textSubtle">{t('To')}</Text>
             <Box maxWidth="70%" style={{ wordBreak: 'break-all', textAlign: 'right' }}>
+              {/* If ENS name is entered, display the ENS profile */}
               {recipientENSName ? (
                 <FlexGap gap="8px" alignItems="center">
                   {recipientAvatar ? (

@@ -28,6 +28,7 @@ const Wrapper = styled(Box)`
   }
 `
 
+// InfinitySwapInner is the main component for the InfinitySwap page
 const InfinitySwapInner = () => {
   const { query } = useRouter()
   const { isMobile, isDesktop } = useMatchBreakpoints()
